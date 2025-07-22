@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Batch Image Replacer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 360px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: white;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            margin: 0;
+            text-shadow: 0 1px 10px rgba(0, 0, 0, 0.2);
+            font-weight: 400;
+        }
+        
+        .status {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .status-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #1f1f1f;
+        }
+        
+        .status-content {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .file-input-container {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .file-input-label {
+            display: block;
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #1f1f1f;
+        }
+        
+        .file-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px dashed rgba(102, 126, 234, 0.4);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+            margin: 0;
+            background: rgba(102, 126, 234, 0.05);
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .file-input:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
+        }
+        
+        .file-input input {
+            display: none;
+        }
+        
+        .selected-files {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .image-list {
+            margin-top: 12px;
+        }
+
+        .image-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            background: rgba(102, 126, 234, 0.05);
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+        
+        .image-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+        }
+
+        .image-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .image-preview {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .image-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .image-name {
+            font-size: 11px;
+            font-weight: 500;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+
+        .image-details {
+            font-size: 10px;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        .image-order {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-left: 8px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyzing-text {
+            color: #007aff;
+            font-style: italic;
+        }
+
+        .completed-text {
+            color: #2d5a2d;
+            font-weight: 500;
+        }
+
+        .error-text {
+            color: #a94442;
+        }
+
+        .toggle-view {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #007aff;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .toggle-view:hover {
+            color: #0056cc;
+        }
+        
+        .scale-options {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .scale-options-title {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #1f1f1f;
+        }
+        
+        .scale-option {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+        
+        .scale-option:last-child {
+            margin-bottom: 0;
+        }
+        
+        .scale-option input[type="radio"] {
+            margin-right: 8px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        
+        .scale-option-content {
+            flex: 1;
+        }
+        
+        .scale-option label {
+            font-size: 12px;
+            color: #333;
+            cursor: pointer;
+            line-height: 1.4;
+            display: block;
+            font-weight: 500;
+        }
+        
+        .scale-option-description {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: rgba(0, 0, 0, 0.2);
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 12px;
+        }
+        
+        .message.success {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            border: 1px solid #a8d8a8;
+        }
+        
+        .message.error {
+            background: #fdf2f2;
+            color: #a94442;
+            border: 1px solid #ebccd1;
+        }
+        
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .error-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: errorModalShow 0.3s ease-out;
+        }
+        
+        @keyframes errorModalShow {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .error-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: #ff4757;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .error-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .error-text {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 20px;
+        }
+        
+        .error-button {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .error-button:hover {
+            background: #ff3742;
+        }
+        
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .success-modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 320px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: successModalShow 0.3s ease-out;
+        }
+        
+        @keyframes successModalShow {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        
+        .success-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            background: #2ed573;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .success-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .success-text {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Batch Image Replacer</h1>
+            <p>여러 이미지를 한 번에 배치하는 스마트 툴</p>
+        </div>
+        
+        <div id="message" class="message hidden"></div>
+        
+        <div class="content">
+            <div class="status">
+                <div class="status-title">선택 상태</div>
+                <div id="selectionStatus" class="status-content">
+                    컴포넌트를 선택해주세요.
+                </div>
+            </div>
+            
+            <div class="file-input-container">
+                <label class="file-input-label">이미지 파일 선택</label>
+                <div class="file-input" onclick="document.getElementById('fileInput').click()">
+                    <input 
+                        type="file" 
+                        id="fileInput" 
+                        multiple 
+                        accept="image/*"
+                        onchange="handleFileSelect(event)"
+                    >
+                    <span>클릭하여 이미지 파일들을 선택하세요</span>
+                </div>
+                <div id="selectedFiles" class="selected-files"></div>
+            </div>
+            
+            <div class="scale-options">
+                <div class="scale-options-title">이미지 크기 조정 방식</div>
+                
+                <div class="scale-option" onclick="selectScaleOption('fill')">
+                    <input type="radio" id="scaleFill" name="scaleMode" value="fill" checked>
+                    <div class="scale-option-content">
+                        <label for="scaleFill">선택한 영역에 맞춤 (기본)</label>
+                        <div class="scale-option-description">이미지가 선택한 영역을 완전히 채웁니다</div>
+                    </div>
+                </div>
+                
+                <div class="scale-option" onclick="selectScaleOption('fit')">
+                    <input type="radio" id="scaleFit" name="scaleMode" value="fit">
+                    <div class="scale-option-content">
+                        <label for="scaleFit">이미지 비율 유지</label>
+                        <div class="scale-option-description">이미지 원본 비율을 유지하며 영역에 맞춥니다</div>
+                    </div>
+                </div>
+                
+                <div class="scale-option" onclick="selectScaleOption('crop')">
+                    <input type="radio" id="scaleCrop" name="scaleMode" value="crop">
+                    <div class="scale-option-content">
+                        <label for="scaleCrop">선택영역 수정</label>
+                        <div class="scale-option-description">이미지 비율에 맞춰 선택영역 크기를 자동 조정합니다</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="buttons">
+            <button id="processBtn" class="btn btn-primary" onclick="processImages()" disabled>
+                생성하기
+            </button>
+            <button class="btn btn-secondary" onclick="cancel()">
+                취소
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let hasValidSelection = false;
+        let selectedScaleMode = 'fill';
+        let imageMetadata = []; // 이미지 메타데이터 저장
+        let showDetailedView = false; // 상세 보기 토글
+
+        onmessage = (event) => {
+            const { type, hasSelection, selectionCount, message } = event.data.pluginMessage;
+            
+            if (type === 'selection-changed') {
+                hasValidSelection = hasSelection;
+                updateSelectionStatus(hasSelection, selectionCount);
+                updateProcessButton();
+            } else if (type === 'success') {
+                showMessage(message, 'success');
+            } else if (type === 'error') {
+                showMessage(message, 'error');
+            }
+        };
+
+        function selectScaleOption(mode) {
+            selectedScaleMode = mode;
+            document.getElementById('scaleFill').checked = mode === 'fill';
+            document.getElementById('scaleFit').checked = mode === 'fit';
+            document.getElementById('scaleCrop').checked = mode === 'crop';
+        }
+
+        function updateSelectionStatus(hasSelection, count) {
+            const statusElement = document.getElementById('selectionStatus');
+            if (hasSelection) {
+                statusElement.textContent = count + '개의 요소가 선택됨';
+                statusElement.style.color = '#2d5a2d';
+            } else {
+                statusElement.textContent = '컴포넌트를 선택해주세요.';
+                statusElement.style.color = '#666';
+            }
+        }
+
+        async function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            selectedFiles = files;
+            imageMetadata = [];
+            showDetailedView = false;
+            
+            const selectedFilesElement = document.getElementById('selectedFiles');
+            
+            if (files.length > 0) {
+                selectedFilesElement.innerHTML = `<div class="analyzing-text">이미지 분석 중...</div>`;
+                
+                // 각 이미지의 메타데이터 분석
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    try {
+                        const metadata = await analyzeImageMetadata(file);
+                        imageMetadata.push(metadata);
+                        
+                        // 진행상황 표시
+                        selectedFilesElement.innerHTML = `
+                            <div class="analyzing-text">이미지 분석 중... (${i + 1}/${files.length})</div>
+                        `;
+                    } catch (error) {
+                        console.error('이미지 분석 오류:', error);
+                        imageMetadata.push({ 
+                            width: 0, 
+                            height: 0, 
+                            ratio: 1, 
+                            error: true,
+                            fileName: file.name,
+                            fileSize: file.size 
+                        });
+                    }
+                }
+                
+                // 분석 완료 후 결과 표시
+                updateImageDisplay();
+                
+            } else {
+                selectedFilesElement.innerHTML = '';
+                imageMetadata = [];
+            }
+            
+            updateProcessButton();
+        }
+
+        function updateImageDisplay() {
+            const selectedFilesElement = document.getElementById('selectedFiles');
+            
+            if (selectedFiles.length === 0) {
+                selectedFilesElement.innerHTML = '';
+                return;
+            }
+
+            let html = `
+                <div class="completed-text" style="margin-bottom: 8px;">
+                    ${selectedFiles.length}개의 이미지 파일 분석 완료
+                </div>
+            `;
+
+            if (showDetailedView) {
+                // 상세 보기
+                html += `<div class="image-list">`;
+                
+                selectedFiles.forEach((file, index) => {
+                    const meta = imageMetadata[index] || {};
+                    
+                    html += `
+                        <div class="image-item">
+                            <img class="image-preview" src="${meta.previewUrl || ''}" alt="${file.name}">
+                            <div class="image-info">
+                                <div class="image-name">${file.name}</div>
+                                <div class="image-details">
+                                    ${meta.error ? 
+                                        '<span class="error-text">분석 실패</span>' : 
+                                        `${meta.width}×${meta.height}px, 비율: ${meta.ratio.toFixed(2)}<br>크기: ${formatFileSize(file.size)}`
+                                    }
+                                </div>
+                            </div>
+                            <div class="image-order">${index + 1}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+                html += `<span class="toggle-view" onclick="toggleView()">간단히 보기</span>`;
+            } else {
+                // 간단 보기
+                const fileNames = selectedFiles.map(f => f.name).join(', ');
+                html += `
+                    <div style="font-size: 11px; color: #666; line-height: 1.3; margin-bottom: 8px;">
+                        ${fileNames}
+                    </div>
+                `;
+                html += `<span class="toggle-view" onclick="toggleView()">상세히 보기</span>`;
+            }
+
+            selectedFilesElement.innerHTML = html;
+        }
+
+        function toggleView() {
+            showDetailedView = !showDetailedView;
+            updateImageDisplay();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // 이미지 메타데이터 분석 함수 (미리보기 URL 추가)
+        function analyzeImageMetadata(file) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                img.onload = () => {
+                    const width = img.naturalWidth;
+                    const height = img.naturalHeight;
+                    const ratio = width / height;
+                    
+                    // 이미지 타입 분류
+                    let imageType = 'square';
+                    if (ratio > 1.2) {
+                        imageType = 'landscape'; // 가로형
+                    } else if (ratio < 0.8) {
+                        imageType = 'portrait'; // 세로형
+                    }
+                    
+                    resolve({
+                        width: width,
+                        height: height,
+                        ratio: ratio,
+                        imageType: imageType,
+                        fileName: file.name,
+                        fileSize: file.size,
+                        previewUrl: img.src, // 미리보기 URL 추가
+                        error: false
+                    });
+                };
+                
+                img.onerror = () => {
+                    reject(new Error('이미지를 로드할 수 없습니다'));
+                };
+                
+                // 파일을 이미지로 로드
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function updateProcessButton() {
+            const processBtn = document.getElementById('processBtn');
+            processBtn.disabled = !(hasValidSelection && selectedFiles.length > 0);
+        }
+
+        async function processImages() {
+            if (!hasValidSelection || selectedFiles.length === 0) {
+                showMessage('컴포넌트를 선택하고 이미지 파일을 선택해주세요.', 'error');
+                return;
+            }
+
+            try {
+                showMessage('이미지를 처리하고 있습니다...', 'processing');
+                
+                const imageDataList = await Promise.all(
+                    selectedFiles.map(file => convertFileToBase64(file))
+                );
+
+                // 메타데이터와 함께 전송
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'process-images',
+                        imageDataList: imageDataList,
+                        imageMetadata: imageMetadata,
+                        scaleMode: selectedScaleMode
+                    }
+                }, '*');
+
+            } catch (error) {
+                showMessage('파일 처리 중 오류가 발생했습니다: ' + error.message, 'error');
+            }
+        }
+
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function showMessage(text, type) {
+            if (type === 'error') {
+                showErrorModal(text);
+            } else if (type === 'success') {
+                showSuccessModal(text);
+            } else {
+                // 기본 메시지 (분석 중 등)
+                const messageElement = document.getElementById('message');
+                messageElement.textContent = text;
+                messageElement.className = 'message ' + type;
+                messageElement.classList.remove('hidden');
+            }
+        }
+
+        function showErrorModal(text) {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('errorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // 에러 모달 생성
+            const modalHtml = `
+                <div id="errorModal" class="error-overlay">
+                    <div class="error-modal">
+                        <div class="error-icon">!</div>
+                        <div class="error-title">오류 발생</div>
+                        <div class="error-text">${text}</div>
+                        <button class="error-button" onclick="closeErrorModal()">확인</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            if (modal) {
+                modal.style.animation = 'errorModalShow 0.2s ease-in reverse';
+                setTimeout(() => {
+                    modal.remove();
+                }, 200);
+            }
+        }
+
+        function showSuccessModal(text) {
+            // 기존 모달 제거
+            const existingModal = document.getElementById('successModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // 성공 모달 생성
+            const modalHtml = `
+                <div id="successModal" class="success-overlay">
+                    <div class="success-modal">
+                        <div class="success-icon">✓</div>
+                        <div class="success-title">완료!</div>
+                        <div class="success-text">${text}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // 3초 후 자동 닫기
+            setTimeout(() => {
+                closeSuccessModal();
+            }, 3000);
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('successModal');
+            if (modal) {
+                modal.style.animation = 'successModalShow 0.2s ease-in reverse';
+                setTimeout(() => {
+                    modal.remove();
+                }, 200);
+            }
+        }
+
+        function cancel() {
+            parent.postMessage({
+                pluginMessage: { type: 'cancel' }
+            }, '*');
+        }
+    </script>
+</body>
+</html>
